@@ -1,10 +1,12 @@
 pipeline {
     agent {
-        label 'build'
+        docker {
+            image 'docker:latest' // Use a Docker image with Docker CLI to build/run other Docker images
+            args '-v /var/run/docker.sock:/var/run/docker.sock' // Mount the host's Docker socket
+        }
     }
     environment {
 	    DOCKER_IMAGE = 'ashokm77/test-repo'
-	    DOCKER_CREDENTIAL_ID= 'docker-creds'
     }	
     stages {
             stage('checkout-stage') {
@@ -12,40 +14,22 @@ pipeline {
                     git branch: 'master', credentialsId: 'ashoksm', url: 'https://github.com/ashok77sm/docker-sample-java-webapp.git'
                 }
             }   
-	    stage('build-stage') {
-                steps {
-                   sh 'mvn clean install'
+            stage('Build Docker Image') {
+            steps {
+                script {
+                    dockerImage = docker.build("${DOCKER_IMAGE}:V${env.BUILD_NUMBER}")
                 }
             }
-	    stage('SonarQube Analysis Stage') {
-                steps{
-                   withSonarQubeEnv('sonarqube') { 
-                       sh "mvn clean verify sonar:sonar"
-                   }
+        }
+
+        stage('Deploy Container on Agent with Volume') {
+            steps {
+                script {
+                    sh "docker volume create docker-volume"
+
+                    docker.image("${DOCKER_IMAGE}:V${env.BUILD_NUMBER}").run("-p 9000:8080 -v docker-volume:/app -d")
                 }
             }
-	    stage('Build Docker Image') {
-                steps {
-                   script {
-                       dockerImage = docker.build("${DOCKER_IMAGE}:V${env.BUILD_NUMBER}")
-                   }
-                }
-            }
-	    stage('Push Docker Image') {
-                steps {
-                   script {
-                      docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIAL_ID}") {
-                        dockerImage.push()
-                      }
-                   }
-                }
-            }
-	    stage('Run Docker Container') {
-               steps {
-                  script {
-                    sh "docker run -d -p 9000:8080 ${DOCKER_IMAGE}:V${env.BUILD_NUMBER}"
-                  }
-               }
-	    }
+        }
     }
 }
