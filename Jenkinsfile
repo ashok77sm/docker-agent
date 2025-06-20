@@ -27,7 +27,7 @@ pipeline {
                 script {
                     sh "docker volume create docker-volume"
 
-                    docker.image("${DOCKER_IMAGE}:V${env.BUILD_NUMBER}").run("-p 9000:8080 -v docker-volume:/app -d")
+                    docker.image("${DOCKER_IMAGE}:V${env.BUILD_NUMBER}").run("-p 9000:8080 -d")
                 }
             }
         }
