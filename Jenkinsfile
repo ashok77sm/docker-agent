@@ -1,8 +1,8 @@
 pipeline {
     agent {
         docker {
-            image 'docker:latest' // Use a Docker image with Docker CLI to build/run other Docker images
-            args '-v /var/run/docker.sock:/var/run/docker.sock' // Mount the host's Docker socket
+         image 'maven:3.9.6-eclipse-temurin-17'
+         args '-v /root/.m2:/root/.m2'
         }
     }	
     environment {
