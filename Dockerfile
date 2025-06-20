@@ -1,4 +1,5 @@
 FROM alpine/git AS source
+RUN mkdir app
 WORKDIR /app
 RUN git clone https://github.com/artisantek/docker-sample-java-webapp.git
 	
